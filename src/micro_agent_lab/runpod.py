@@ -38,8 +38,9 @@ def create() -> str:
     load_dotenv()
     gpu = os.environ.get("RUNPOD_GPU_TYPE", "").strip()
     image = os.environ.get("RUNPOD_IMAGE", "").strip()
-    if not gpu or not image:
-        raise ValueError("Set RUNPOD_GPU_TYPE and RUNPOD_IMAGE for Pod creation")
+    template = os.environ.get("RUNPOD_TEMPLATE_ID", "").strip()
+    if not gpu or (not image and not template):
+        raise ValueError("Set RUNPOD_GPU_TYPE and RUNPOD_IMAGE or RUNPOD_TEMPLATE_ID for Pod creation")
     body = {
         "name": os.environ.get("RUNPOD_POD_NAME", "micro-agent-lab"),
         "image": image,
@@ -50,6 +51,10 @@ def create() -> str:
         "mounts": {"persistent": {"size": int(os.environ.get("RUNPOD_VOLUME_GB", "30")),
                                    "path": "/workspace"}},
     }
+    if template:
+        body["templateId"] = template
+        if not image:
+            body.pop("image")
     return _request("POST", "/pods", body)["id"]
 
 def endpoint(pod_id: str) -> str:
@@ -91,7 +96,7 @@ def managed_run(run_fn, *, create_pod: bool = False, stop_after: bool = True):
             current = status(pod_id)
             if not current:
                 raise ValueError("Pod not found")
-            if current.get("status") != "RUNNING":
+            if current.get("status") not in ("RUNNING", "STARTING", "PROVISIONING"):
                 start(pod_id)
                 started_here = True
         base = os.environ.get("RUNPOD_INFERENCE_BASE_URL", "").strip() or endpoint(pod_id)
