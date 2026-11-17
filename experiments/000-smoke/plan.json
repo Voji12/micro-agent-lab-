@@ -1,0 +1,22 @@
+{
+  "experiment": "000-smoke",
+  "status": "READY",
+  "steps": [
+    {
+      "id": "001",
+      "objective": "Create a Python function that converts Celsius to Fahrenheit",
+      "files": [
+        "temperature.py"
+      ],
+      "instructions": "Create temperature.py with a function celsius_to_fahrenheit(celsius: float) -> float. Return celsius * 9 / 5 + 32. No imports or other files. Return complete file content as JSON.",
+      "checks": [
+        [
+          "python",
+          "-c",
+          "from temperature import celsius_to_fahrenheit as f; assert f(0)==32; assert f(100)==212; assert f(-40)==-40"
+        ]
+      ],
+      "max_attempts": 2
+    }
+  ]
+}
