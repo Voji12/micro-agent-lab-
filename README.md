@@ -25,7 +25,7 @@ micro-agent verify experiments/001-airspeed/plan.example.json 001 --cwd /path/to
 micro-agent lesson --step 001 --failure 'wrong angle unit' --lesson 'specify degrees explicitly' --evidence 'test output'
 ```
 
-For **Unsloth Studio** and **RunPod API-managed GPU Pods** see [providers and lifecycle](docs/PROVIDERS.md).\n\nRead [setup and security](docs/SETUP.md), [experiment design](docs/EXPERIMENT.md) and [teacher instructions](docs/TEACHER_PROMPT.md). Only execute **reviewed** plan commands inside disposable workspaces; never commit secrets, proprietary SDKs or source from private projects.
+For the preferred **notebook RTX 3500 Ada + Shadow PC Power** Unsloth setup, see [local GPU lab](docs/LOCAL_GPU_LAB.md).\n\nFor **Unsloth Studio** and **RunPod API-managed GPU Pods** see [providers and lifecycle](docs/PROVIDERS.md).\n\nRead [setup and security](docs/SETUP.md), [experiment design](docs/EXPERIMENT.md) and [teacher instructions](docs/TEACHER_PROMPT.md). Only execute **reviewed** plan commands inside disposable workspaces; never commit secrets, proprietary SDKs or source from private projects.
 
 ## Next milestones
 1. Prepare clean-room student fixture and teacher-generated plan.
