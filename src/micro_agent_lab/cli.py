@@ -27,6 +27,9 @@ def main() -> None:
     execute_parser.add_argument("--run-dir", type=Path, default=Path("runs/latest"))
     execute_parser.add_argument("--lessons", type=Path, default=Path("memory/lessons.jsonl"))
     execute_parser.add_argument("--allow-checks", action="store_true", help="Explicitly allow plan subprocess commands")
+    execute_parser.add_argument("--provider", choices=["student", "unsloth", "runpod"], default="student")
+    execute_parser.add_argument("--create-pod", action="store_true", help="Explicitly provision billable RunPod Pod")
+    execute_parser.add_argument("--keep-pod-running", action="store_true", help="Do not stop Pod after execution")
     args = p.parse_args()
     if args.action == "prompts":
         lessons = load_lessons(args.lessons)
@@ -41,7 +44,25 @@ def main() -> None:
         raise SystemExit(0 if ok else 1)
     elif args.action == "run":
         from .runner import execute
-        result = execute(args.plan, args.workspace, args.run_dir, args.lessons, allow_checks=args.allow_checks)
+        if args.provider == "unsloth":
+            import os
+            from .config import load_dotenv
+            load_dotenv()
+            os.environ["STUDENT_BASE_URL"] = os.environ.get("UNSLOTH_BASE_URL", "http://127.0.0.1:8888/v1")
+            os.environ["STUDENT_API_KEY"] = os.environ.get("UNSLOTH_API_KEY", "")
+            os.environ["STUDENT_MODEL"] = os.environ.get("UNSLOTH_MODEL", "")
+        def do_run():
+            return execute(args.plan, args.workspace, args.run_dir, args.lessons, allow_checks=args.allow_checks)
+        if args.provider == "runpod":
+            from .runpod import managed_run
+            from .config import load_dotenv
+            import os
+            load_dotenv()
+            os.environ["STUDENT_MODEL"] = os.environ.get("RUNPOD_MODEL", "")
+            os.environ["STUDENT_API_KEY"] = os.environ.get("RUNPOD_INFERENCE_API_KEY", "")
+            result = managed_run(do_run, create_pod=args.create_pod, stop_after=not args.keep_pod_running)
+        else:
+            result = do_run()
         print(json.dumps(result, indent=2))
         raise SystemExit(0 if result["passed"] else 1)
     else:
