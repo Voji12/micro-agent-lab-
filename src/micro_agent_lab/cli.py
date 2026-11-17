@@ -21,6 +21,12 @@ def main() -> None:
     lesson.add_argument("--lesson", required=True)
     lesson.add_argument("--evidence", required=True)
     lesson.add_argument("--path", type=Path, default=Path("memory/lessons.jsonl"))
+    execute_parser = sub.add_parser("run", help="Run student against isolated workspace")
+    execute_parser.add_argument("plan", type=Path)
+    execute_parser.add_argument("--workspace", type=Path, required=True)
+    execute_parser.add_argument("--run-dir", type=Path, default=Path("runs/latest"))
+    execute_parser.add_argument("--lessons", type=Path, default=Path("memory/lessons.jsonl"))
+    execute_parser.add_argument("--allow-checks", action="store_true", help="Explicitly allow plan subprocess commands")
     args = p.parse_args()
     if args.action == "prompts":
         lessons = load_lessons(args.lessons)
@@ -33,6 +39,11 @@ def main() -> None:
         ok = run_checks(matches[0], args.cwd.resolve(), args.log)
         print(json.dumps({"step": args.step, "passed": ok, "log": str(args.log)}))
         raise SystemExit(0 if ok else 1)
+    elif args.action == "run":
+        from .runner import execute
+        result = execute(args.plan, args.workspace, args.run_dir, args.lessons, allow_checks=args.allow_checks)
+        print(json.dumps(result, indent=2))
+        raise SystemExit(0 if result["passed"] else 1)
     else:
         record_jsonl(args.path, {"step": args.step, "failure": args.failure,
                                  "lesson": args.lesson, "evidence": args.evidence, "verified": False})
