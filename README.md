@@ -2,7 +2,7 @@
 
 Experimental, provider-neutral harness for **teacher → microtask plan → small local coding student → verification → experience memory**.
 
-**Status: executable student MVP.** OpenAI-compatible/Ollama student, constrained file writes, test loop, retries, rollback and JSONL logs are implemented. Teacher API, Aider/cl-agent integration and real model benchmarks are not implemented.
+**Status: executable student MVP (not live GPU-tested).** OpenAI-compatible/Ollama student, constrained file writes, test loop, retries, rollback and JSONL logs are implemented. Teacher API, Aider/cl-agent integration and real model benchmarks are not implemented.
 
 ## Reference
 Read-only source: https://github.com/Voji12/msfs-cockpit — React/TypeScript/SVG airspeed gauge, C#/.NET Framework 4.8 SimConnect bridge. This repo does not modify or copy the source.
@@ -25,7 +25,7 @@ micro-agent verify experiments/001-airspeed/plan.example.json 001 --cwd /path/to
 micro-agent lesson --step 001 --failure 'wrong angle unit' --lesson 'specify degrees explicitly' --evidence 'test output'
 ```
 
-Read [setup and security](docs/SETUP.md), [experiment design](docs/EXPERIMENT.md) and [teacher instructions](docs/TEACHER_PROMPT.md). Only execute **reviewed** plan commands inside disposable workspaces; never commit secrets, proprietary SDKs or source from private projects.
+For **Unsloth Studio** and **RunPod API-managed GPU Pods** see [providers and lifecycle](docs/PROVIDERS.md).\n\nRead [setup and security](docs/SETUP.md), [experiment design](docs/EXPERIMENT.md) and [teacher instructions](docs/TEACHER_PROMPT.md). Only execute **reviewed** plan commands inside disposable workspaces; never commit secrets, proprietary SDKs or source from private projects.
 
 ## Next milestones
 1. Prepare clean-room student fixture and teacher-generated plan.
