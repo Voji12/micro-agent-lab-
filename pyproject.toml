@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "micro-agent-lab"
+version = "0.1.0"
+description = "Measured teacher/student micro-task coding experiments"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+micro-agent = "micro_agent_lab.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
