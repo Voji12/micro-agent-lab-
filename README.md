@@ -11,9 +11,12 @@ Read-only source: https://github.com/Voji12/msfs-cockpit — React/TypeScript/SV
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -e '.[test]'\ncp .env.example .env  # edit URL, key and model
+pip install -e '.[test]'
+cp .env.example .env  # edit URL, key and model
 pytest -q
-micro-agent prompts experiments/001-airspeed/plan.example.json\nmkdir -p student-workspace\nmicro-agent run experiments/001-airspeed/plan.example.json --workspace student-workspace --run-dir runs/first --allow-checks
+micro-agent prompts experiments/001-airspeed/plan.example.json
+mkdir -p student-workspace
+micro-agent run experiments/001-airspeed/plan.example.json --workspace student-workspace --run-dir runs/first --allow-checks
 ```
 
 ## Commands
