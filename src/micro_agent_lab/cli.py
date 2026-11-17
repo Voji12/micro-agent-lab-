@@ -27,11 +27,16 @@ def main() -> None:
     execute_parser.add_argument("--run-dir", type=Path, default=Path("runs/latest"))
     execute_parser.add_argument("--lessons", type=Path, default=Path("memory/lessons.jsonl"))
     execute_parser.add_argument("--allow-checks", action="store_true", help="Explicitly allow plan subprocess commands")
-    execute_parser.add_argument("--provider", choices=["student", "unsloth", "runpod"], default="student")
+    execute_parser.add_argument("--provider", choices=["student", "unsloth", "runpod", "notebook", "shadow"], default="student")
     execute_parser.add_argument("--create-pod", action="store_true", help="Explicitly provision billable RunPod Pod")
     execute_parser.add_argument("--keep-pod-running", action="store_true", help="Do not stop Pod after execution")
+    probe = sub.add_parser("probe", help="Check configured model endpoint")
+    probe.add_argument("--provider", choices=["notebook", "shadow"], required=True)
     args = p.parse_args()
-    if args.action == "prompts":
+    if args.action == "probe":
+        from .profiles import probe_profile
+        print(json.dumps(probe_profile(args.provider), indent=2))
+    elif args.action == "prompts":
         lessons = load_lessons(args.lessons)
         for step in load_plan(args.plan):
             print(f"\n{'='*20} {step.id} {'='*20}\n{format_prompt(step, lessons)}")
@@ -44,7 +49,10 @@ def main() -> None:
         raise SystemExit(0 if ok else 1)
     elif args.action == "run":
         from .runner import execute
-        if args.provider == "unsloth":
+        if args.provider in ("notebook", "shadow"):
+            from .profiles import select_profile
+            select_profile(args.provider)
+        elif args.provider == "unsloth":
             import os
             from .config import load_dotenv
             load_dotenv()
