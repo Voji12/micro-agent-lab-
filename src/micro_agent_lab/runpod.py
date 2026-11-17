@@ -1,8 +1,4 @@
-"""RunPod Pod lifecycle through documented GraphQL operations.
-
-No automatic Pod creation without explicit --create-pod.
-The RunPod API key is never sent to the inference endpoint.
-"""
+"""RunPod REST API v2 Pod lifecycle with opt-in creation and automatic cleanup."""
 from __future__ import annotations
 import json
 import os
@@ -11,41 +7,32 @@ from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 from .config import load_dotenv
 
-API = "https://api.runpod.io/graphql"
+API = "https://api.runpod.io/v2"
 
-def _request(query: str, variables: dict | None = None) -> dict:
+def _request(method: str, path: str, payload: dict | None = None) -> dict:
     load_dotenv()
     key = os.environ.get("RUNPOD_API_KEY", "")
     if not key:
         raise ValueError("RUNPOD_API_KEY missing")
-    body = json.dumps({"query": query, "variables": variables or {}}).encode()
-    # RunPod GraphQL documentation specifies api_key query parameter.
-    from urllib.parse import urlencode
-    req = Request(API + "?" + urlencode({"api_key": key}), data=body,
-                  headers={"Content-Type": "application/json"}, method="POST")
+    data = json.dumps(payload).encode() if payload is not None else None
+    req = Request(API + path, data=data, method=method, headers={
+        "Authorization": f"Bearer {key}", "Content-Type": "application/json"})
     try:
         with urlopen(req, timeout=40) as response:
-            result = json.load(response)
+            return json.load(response)
     except HTTPError as exc:
-        raise RuntimeError(f"RunPod HTTP {exc.code}") from exc
+        raise RuntimeError(f"RunPod REST v2 HTTP {exc.code}") from exc
     except URLError as exc:
         raise RuntimeError("RunPod API unreachable") from exc
-    if result.get("errors"):
-        raise RuntimeError("RunPod GraphQL error: " +
-                           "; ".join(e.get("message", "unknown") for e in result["errors"]))
-    return result["data"]
 
 def status(pod_id: str) -> dict:
-    return _request("query($id:String!){pod(input:{podId:$id}){id desiredStatus runtime{uptimeInSeconds}}}",
-                    {"id": pod_id})["pod"]
+    return _request("GET", f"/pods/{pod_id}")
 
 def start(pod_id: str) -> dict:
-    return _request("mutation($id:String!){podResume(input:{podId:$id,gpuCount:1}){id desiredStatus}}",
-                    {"id": pod_id})["podResume"]
+    return _request("POST", f"/pods/{pod_id}/action", {"action": "start"})
 
 def stop(pod_id: str) -> dict:
-    return _request("mutation($id:String!){podStop(input:{podId:$id}){id desiredStatus}}",
-                    {"id": pod_id})["podStop"]
+    return _request("POST", f"/pods/{pod_id}/action", {"action": "stop"})
 
 def create() -> str:
     load_dotenv()
@@ -53,22 +40,17 @@ def create() -> str:
     image = os.environ.get("RUNPOD_IMAGE", "").strip()
     if not gpu or not image:
         raise ValueError("Set RUNPOD_GPU_TYPE and RUNPOD_IMAGE for Pod creation")
-    input_data = {
-        "cloudType": os.environ.get("RUNPOD_CLOUD_TYPE", "SECURE"),
-        "gpuCount": 1,
-        "gpuTypeId": gpu,
+    body = {
         "name": os.environ.get("RUNPOD_POD_NAME", "micro-agent-lab"),
-        "imageName": image,
-        "volumeInGb": int(os.environ.get("RUNPOD_VOLUME_GB", "30")),
-        "containerDiskInGb": int(os.environ.get("RUNPOD_CONTAINER_DISK_GB", "30")),
-        "ports": os.environ.get("RUNPOD_PORTS", "8000/http"),
-        "volumeMountPath": "/workspace",
+        "image": image,
+        "cloud": os.environ.get("RUNPOD_CLOUD_TYPE", "SECURE"),
+        "gpu": {"id": gpu, "count": 1},
+        "disk": int(os.environ.get("RUNPOD_CONTAINER_DISK_GB", "30")),
+        "ports": [x.strip() for x in os.environ.get("RUNPOD_PORTS", "8000/http").split(",") if x.strip()],
+        "mounts": {"persistent": {"size": int(os.environ.get("RUNPOD_VOLUME_GB", "30")),
+                                   "path": "/workspace"}},
     }
-    # The image must serve the configured model itself. Creation does not install/launch a model.
-    result = _request(
-        "mutation($input:PodFindAndDeployOnDemandInput!){podFindAndDeployOnDemand(input:$input){id}}",
-        {"input": input_data})
-    return result["podFindAndDeployOnDemand"]["id"]
+    return _request("POST", "/pods", body)["id"]
 
 def endpoint(pod_id: str) -> str:
     load_dotenv()
@@ -109,7 +91,7 @@ def managed_run(run_fn, *, create_pod: bool = False, stop_after: bool = True):
             current = status(pod_id)
             if not current:
                 raise ValueError("Pod not found")
-            if current.get("desiredStatus") != "RUNNING":
+            if current.get("status") != "RUNNING":
                 start(pod_id)
                 started_here = True
         base = os.environ.get("RUNPOD_INFERENCE_BASE_URL", "").strip() or endpoint(pod_id)
