@@ -1,0 +1,22 @@
+{
+  "experiment": "001-airspeed",
+  "status": "EXAMPLE_ONLY_NOT_TEACHER_GENERATED",
+  "steps": [
+    {
+      "id": "001",
+      "objective": "Create isolated pure function mapping knots to needle degrees using approved calibration fixtures",
+      "files": [
+        "frontend/src/components/instruments/airspeedReproductionGeometry.ts"
+      ],
+      "instructions": "Read approved fixture and interface contract. Implement one pure function. Do not invent calibration values. If fixture is missing, report blocked.",
+      "checks": [
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ]
+      ],
+      "max_attempts": 2
+    }
+  ]
+}
