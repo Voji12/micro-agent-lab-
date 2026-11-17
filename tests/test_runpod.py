@@ -8,14 +8,14 @@ def test_endpoint(monkeypatch):
 
 def test_existing_running_pod_is_not_stopped(monkeypatch):
     monkeypatch.setenv("RUNPOD_POD_ID", "abc")
-    monkeypatch.setattr(runpod, "status", lambda _: {"desiredStatus": "RUNNING"})
+    monkeypatch.setattr(runpod, "status", lambda _: {"status": "RUNNING"})
     monkeypatch.setattr(runpod, "wait_ready", lambda _: None)
     monkeypatch.setattr(runpod, "stop", lambda _: pytest.fail("Must not stop preexisting running pod"))
     assert runpod.managed_run(lambda: 42) == 42
 
 def test_started_pod_stops_even_on_failure(monkeypatch):
     monkeypatch.setenv("RUNPOD_POD_ID", "abc")
-    monkeypatch.setattr(runpod, "status", lambda _: {"desiredStatus": "EXITED"})
+    monkeypatch.setattr(runpod, "status", lambda _: {"status": "EXITED"})
     calls = []
     monkeypatch.setattr(runpod, "start", lambda pod: calls.append(("start", pod)))
     monkeypatch.setattr(runpod, "stop", lambda pod: calls.append(("stop", pod)))
