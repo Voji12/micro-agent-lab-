@@ -14,9 +14,9 @@ source .venv/bin/activate
 pip install -e '.[test]'
 cp .env.example .env  # edit URL, key and model
 pytest -q
-micro-agent prompts experiments/001-airspeed/plan.example.json
+micro-agent prompts experiments/000-smoke/plan.json
 mkdir -p student-workspace
-micro-agent run experiments/001-airspeed/plan.example.json --workspace student-workspace --run-dir runs/first --allow-checks
+micro-agent run experiments/000-smoke/plan.json --workspace student-workspace --run-dir runs/first --allow-checks
 ```
 
 ## Commands
